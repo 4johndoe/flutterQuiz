@@ -1,7 +1,8 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'quiz.dart';
+import 'package:quizApp/quiz.dart';
 import 'package:html_unescape/html_unescape.dart';
 
 void main() => runApp(MyApp());
@@ -25,6 +26,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   Quiz quiz;
   List<Results> results;
+  Random random = Random();
 
   Future<void> fetchQuestions() async {
     var res = await http.get("https://opentdb.com/api.php?amount=20");
@@ -78,6 +80,7 @@ class _HomePageState extends State<HomePage> {
           RaisedButton(
             onPressed: () {
               fetchQuestions();
+              setState(() {});
             },
             child: Text("Try Again"),
           )
