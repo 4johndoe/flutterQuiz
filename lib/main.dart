@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'quiz.dart';
+import 'package:html_unescape/html_unescape.dart';
 
 void main() => runApp(MyApp());
 
@@ -40,28 +41,54 @@ class _HomePageState extends State<HomePage> {
         title: Text("Quiz App"),
         elevation: 0.0,
       ),
-      body: FutureBuilder(
-        future: fetchQuestions(),
-        builder: (BuildContext context, AsyncSnapshot snapshot) {
-          switch (snapshot.connectionState) {
-            case ConnectionState.none:
-              return Text("Press button to start.");
-            case ConnectionState.active:
-            case ConnectionState.waiting:
-              return Center(
-                child: CircularProgressIndicator(),
-              );
-            case ConnectionState.done:
-              if (snapshot.hasError) return Container();
-              return questionList();
-          }
-          return null;
-        },
+      body: RefreshIndicator(
+        onRefresh: fetchQuestions,
+        child: FutureBuilder(
+          future: fetchQuestions(),
+          builder: (BuildContext context, AsyncSnapshot snapshot) {
+            switch (snapshot.connectionState) {
+              case ConnectionState.none:
+                return Text("Press button to start.");
+              case ConnectionState.active:
+              case ConnectionState.waiting:
+                return Center(
+                  child: CircularProgressIndicator(),
+                );
+              case ConnectionState.done:
+                if (snapshot.hasError) return errorData(snapshot);
+                return questionList();
+            }
+            return null;
+          },
+        ),
+      ),
+    );
+  }
+
+  Padding errorData(AsyncSnapshot snapshot) {
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text("Error: ${snapshot.error}"),
+          SizedBox(
+            height: 20.0,
+          ),
+          RaisedButton(
+            onPressed: () {
+              fetchQuestions();
+            },
+            child: Text("Try Again"),
+          )
+        ],
       ),
     );
   }
 
   ListView questionList() {
+    var unescape = new HtmlUnescape();
+
     return ListView.builder(
       itemCount: results.length,
       itemBuilder: (context, index) => Card(
@@ -73,7 +100,7 @@ class _HomePageState extends State<HomePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                results[index].question,
+                unescape.convert(results[index].question),
                 style: TextStyle(
                   fontSize: 18.0,
                   fontWeight: FontWeight.bold,
@@ -85,7 +112,7 @@ class _HomePageState extends State<HomePage> {
                   children: <Widget>[
                     FilterChip(
                       backgroundColor: Colors.grey[100],
-                      label: Text(results[index].category),
+                      label: Text(unescape.convert(results[index].category)),
                       onSelected: (b) {},
                     ),
                     SizedBox(
@@ -93,7 +120,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     FilterChip(
                       backgroundColor: Colors.grey[100],
-                      label: Text(results[index].difficulty),
+                      label: Text(unescape.convert(results[index].difficulty)),
                       onSelected: (b) {},
                     ),
                   ],
